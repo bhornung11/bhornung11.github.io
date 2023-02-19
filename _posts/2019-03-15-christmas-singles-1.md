@@ -11,11 +11,11 @@ A simple mathematical formalism and a framework therein are presented to analyse
 
 
 
-The raw notebook can be found [here](https://github.com/bhornung/bhornung.github.io/blob/master/assets/christmas-singles-1/notebook/christmas-singles-1.ipynb). The custom python utilities invoked in this post are stored at [this folder]((https://github.com/bhornung/bhornung.github.io/blob/master/assets/christmas-singles-1/scripts).
+The raw notebook can be found [here](https://github.com/bhornung11/bhornung11.github.io/blob/master/assets/christmas-singles-1/notebook/christmas-singles-1.ipynb). The custom python utilities invoked in this post are stored at [this folder]((https://github.com/bhornung11/bhornung11.github.io/blob/master/assets/christmas-singles-1/scripts).
 
 ## Prelude
 
-I have been looking at the UK singes charts. In the [first post](https://bhornung.github.io/python/2019/02/22/uk-charts-1.html) the record labels were investigated. I set off to analyse the singles themselves. I loaded the data to a dataframe `chart_df`: Each single is encoded by a non-negative integer. As a quick check of the correctness of the encoding, the weekly mean codes were plotted. I deliberately chose the mean as a measure of consistency for it is sensitive to outliers. A monotonically increasing curve was expected. However, I got this:
+I have been looking at the UK singes charts. In the [first post](https://bhornung11.github.io/python/2019/02/22/uk-charts-1.html) the record labels were investigated. I set off to analyse the singles themselves. I loaded the data to a dataframe `chart_df`: Each single is encoded by a non-negative integer. As a quick check of the correctness of the encoding, the weekly mean codes were plotted. I deliberately chose the mean as a measure of consistency for it is sensitive to outliers. A monotonically increasing curve was expected. However, I got this:
 
 
 ![png]({{"/assets/christmas-singles-1/images/output_4_0.png"}})
@@ -147,7 +147,7 @@ $$
 o_{ij} = \frac{ |c^{C}_{i} \cap c^{C}_{j}| }{\min(|c^{C}_{i}|, |c^{C}_{j}|)}
 $$
 
-The overlap is unit if one set is contained in the other, and zero if they have no elements/singles in common. Our (reasonably) efficient [Tversky index algorithm](https://bhornung.github.io/python/2019/03/05/tversky-index.html) will be used.
+The overlap is unit if one set is contained in the other, and zero if they have no elements/singles in common. Our (reasonably) efficient [Tversky index algorithm](https://bhornung11.github.io/python/2019/03/05/tversky-index.html) will be used.
 
 
 ```python
@@ -309,7 +309,7 @@ which is the weighted Jaccard index of two charts. Arcs are now drawn between re
 
 #### Clustering years
 
-A logical next step is to group years by their similarities. We are going to use a [Markov cluster algorithm](https://github.com/bhornung/MCA). Each group of years coloured by the same colour have similar charts.
+A logical next step is to group years by their similarities. We are going to use a [Markov cluster algorithm](https://github.com/bhornung11/MCA). Each group of years coloured by the same colour have similar charts.
 
 
 ```python

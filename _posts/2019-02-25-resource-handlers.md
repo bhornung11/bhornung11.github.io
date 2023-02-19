@@ -28,7 +28,7 @@ In the following we create a data handler which has the following methods
 * `get_all` returns all data units
 * `close_resource` disconnects from and closes the resource
 
-The raw notebook can be viewed [here](https://github.com/bhornung/bhornung.github.io/blob/master/assets/resource-handlers/notebook/resource-handlers.ipynb).
+The raw notebook can be viewed [here](https://github.com/bhornung11/bhornung11.github.io/blob/master/assets/resource-handlers/notebook/resource-handlers.ipynb).
 
 ### Mock-up class
 
@@ -162,7 +162,7 @@ class FileHandler1:
 
 #### Trial
 
-In the first example a [file](https://github.com/bhornung/bhornung.github.io/blob/master/assets/online-encoder/data/trial.txt) is read line by line:
+In the first example a [file](https://github.com/bhornung11/bhornung11.github.io/blob/master/assets/online-encoder/data/trial.txt) is read line by line:
 
 
 ```python

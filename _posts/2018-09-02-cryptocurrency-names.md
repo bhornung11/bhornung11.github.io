@@ -40,7 +40,7 @@ The data have been collected from the [crypocompare.com](https://www.cryptocompa
 
 ## Coding
 
-Some of the functions have been moved to the [Appendix](## Appendix). The raw notebook can be found [here](https://github.com/bhornung/bhornung.github.io/blob/master/assets/cryptocurrency-names/notebook/cryptocurrency-names.ipynb).
+Some of the functions have been moved to the [Appendix](## Appendix). The raw notebook can be found [here](https://github.com/bhornung11/bhornung11.github.io/blob/master/assets/cryptocurrency-names/notebook/cryptocurrency-names.ipynb).
 
 ### Coin list
 

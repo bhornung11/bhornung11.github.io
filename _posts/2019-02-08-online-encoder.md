@@ -6,7 +6,7 @@ categories: python
 ---
 
 
-A handful of online encoders are constructed and compared in this post. The raw notebook can be found [here](https://github.com/bhornung/bhornung.github.io/blob/master/assets/online-encoder/notebook/onlne-encoder.ipynb).
+A handful of online encoders are constructed and compared in this post. The raw notebook can be found [here](https://github.com/bhornung11/bhornung11.github.io/blob/master/assets/online-encoder/notebook/onlne-encoder.ipynb).
 
 ## Motivation
 
@@ -18,7 +18,7 @@ Unfortunately, the encoder utility [`LabelEncoder`](https://scikit-learn.org/sta
 
 ## Random string sequences
 
-We need a source of random string sequences to test the future encoders. Below, we write a generator object (or factory), `random_string_sequence_generator_factory` that yields random string generators. This function can be viewed as an infinite resource of sequence generators. It is really similar to our Markov chain generator [MarkovSequenceGenerator](https://bhornung.github.io/python/2018/09/02/cryptocurrency-names.html).
+We need a source of random string sequences to test the future encoders. Below, we write a generator object (or factory), `random_string_sequence_generator_factory` that yields random string generators. This function can be viewed as an infinite resource of sequence generators. It is really similar to our Markov chain generator [MarkovSequenceGenerator](https://bhornung11.github.io/python/2018/09/02/cryptocurrency-names.html).
 
 
 ```python
@@ -414,7 +414,7 @@ print([(string, encoder_4.decode(encoder_4.encode(string)))
 
 ## Comparison
 
-The performance of the four encoders are compared below. We could have used the [`SimTimer` class](https://github.com/bhornung/SlimTimer/blob/master/slimTimer/slimTimer.py), which also had given opportunities to write more decorators and generators. However, I doubt anyone would debate how refreshing scribbling a few for loops can be.
+The performance of the four encoders are compared below. We could have used the [`SimTimer` class](https://github.com/bhornung11/SlimTimer/blob/master/slimTimer/slimTimer.py), which also had given opportunities to write more decorators and generators. However, I doubt anyone would debate how refreshing scribbling a few for loops can be.
 
 The string length is set to eight. The sequence lengths are 100, 1000, 10000, 100000, 1000000. Each size contains five different sequences. 
 

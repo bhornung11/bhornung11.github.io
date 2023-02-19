@@ -6,12 +6,12 @@ categories: python
 ---
 
 
-This post is the second part of the discussion of classifying climates. In the previous [one](https://bhornung.github.io/python/2019/01/29/climate-classification.html) we explored the structure of the data and optimised a k nearest neighbour classifier. The objectives this time are
+This post is the second part of the discussion of classifying climates. In the previous [one](https://bhornung11.github.io/python/2019/01/29/climate-classification.html) we explored the structure of the data and optimised a k nearest neighbour classifier. The objectives this time are
 
 * build a data pipeline
 * use neural networks to classify the climate data
 
-The raw notebook can be found [here](https://github.com/bhornung/bhornung.github.io/blob/master/assets/climate-classification-2/notebook/climate-classification-2.ipynb).
+The raw notebook can be found [here](https://github.com/bhornung11/bhornung11.github.io/blob/master/assets/climate-classification-2/notebook/climate-classification-2.ipynb).
 
 ## The Data
 

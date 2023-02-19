@@ -283,7 +283,7 @@ def assign_labels(a):
 
 ## Testing
 
-We are going to compare the above methods on the sets created with our efficient [`create_block_diagonal_csr_matrix_np`](https://bhornung.github.io/python/2018/04/05/sparse_matrices.html) utility.
+We are going to compare the above methods on the sets created with our efficient [`create_block_diagonal_csr_matrix_np`](https://bhornung11.github.io/python/2018/04/05/sparse_matrices.html) utility.
 
 
 ```python
@@ -305,7 +305,7 @@ keep_density = 0.05
 keep_each_row = True
 ```
 
-As to timing, I wrote a bare bones timer utility, [`SlimTimer`](https://github.com/bhornung/SlimTimer), which will be invoked to measure the execution times.
+As to timing, I wrote a bare bones timer utility, [`SlimTimer`](https://github.com/bhornung11/SlimTimer), which will be invoked to measure the execution times.
 
 
 ```python

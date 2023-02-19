@@ -8,7 +8,7 @@ categories: python
 
 In this blog post, we are going to have a look at GDPs of various countries and try to group them according to a suitable measure.
 
-The raw notebook can be found [here](https://github.com/bhornung/bhornung.github.io/blob/master/assets/clustering-gdp/notebook/clustering-gdp.ipynb).
+The raw notebook can be found [here](https://github.com/bhornung11/bhornung11.github.io/blob/master/assets/clustering-gdp/notebook/clustering-gdp.ipynb).
 
 
 ## Data

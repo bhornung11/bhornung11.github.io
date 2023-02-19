@@ -13,7 +13,7 @@ When looking at certain graphs, one immediately recognises that certain nodes ar
 ### Markov process
 Imagine that there is person standing on a node of the graph. He can only step to nodes which are link to the one he rests on. Once he is on the new he can move an other one no matter where he stood before. This is an example of the Markov process where the transition from one state to the other does not depend on the previous states leading to the current one. If this random walker happens to be in a region where the nodes are strongly connected, he is likely to spend more time there. In other words connected nodes that have high step count are clusters in this sense.
 
-The Markoc Cluster algorithm is based on this analogy, which are going to implement. The source code can be found [here](https://github.com/bhornung/MCA).
+The Markoc Cluster algorithm is based on this analogy, which are going to implement. The source code can be found [here](https://github.com/bhornung11/MCA).
 
 ## Formulation
 
@@ -79,7 +79,7 @@ $$
 \end{eqnarray}
 $$
 
-The $\texttt{Inflate}$, $\texttt{Expand}$ functions inflate and expand the transition matrix as defined in the previous paragraph. $\texttt{Prune}$ removes all elements below a threshold. $\texttt{RowNormalise}$ normalises each row to unit in $L1$ sense. Finally, $\texttt{ReadClusters}$ compares the column vectors to assign cluster labels to the nodes (see [my previous post](https://bhornung.github.io/python/2018/04/13/Comparing-large-arrays.html)).
+The $\texttt{Inflate}$, $\texttt{Expand}$ functions inflate and expand the transition matrix as defined in the previous paragraph. $\texttt{Prune}$ removes all elements below a threshold. $\texttt{RowNormalise}$ normalises each row to unit in $L1$ sense. Finally, $\texttt{ReadClusters}$ compares the column vectors to assign cluster labels to the nodes (see [my previous post](https://bhornung11.github.io/python/2018/04/13/Comparing-large-arrays.html)).
 
 ## Implementation
 

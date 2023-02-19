@@ -101,11 +101,11 @@ For example, the `most_common` function would look like
 most_common = lambda x: Counter(x).most_common(1)[0][0]
 ```
 
-In some cases, the code snippets are modestly interesting, hence they are hidden from this post. The raw jupyter notebook can be found [here](https://github.com/bhornung/bhornung.github.io/blob/master/assets/visas/notebook/visa_anal.ipynb), which contains all the code used to process the data.
+In some cases, the code snippets are modestly interesting, hence they are hidden from this post. The raw jupyter notebook can be found [here](https://github.com/bhornung11/bhornung11.github.io/blob/master/assets/visas/notebook/visa_anal.ipynb), which contains all the code used to process the data.
 
 ### Graphs
 
-If a script used to generate a plot is not particularly insightful it will be omitted. Again, they all can be found [here](https://github.com/bhornung/bhornung.github.io/blob/master/assets/visas/notebook/visa_anal.ipynb).
+If a script used to generate a plot is not particularly insightful it will be omitted. Again, they all can be found [here](https://github.com/bhornung11/bhornung11.github.io/blob/master/assets/visas/notebook/visa_anal.ipynb).
 
 ## Data collection
 The data was collected from the most excellent website [passportindex.org](https://passportindex.org). I would encourage everyone to have a look at the site; one can learn about the (geo)political relationships between countries in a really entertaining way.
@@ -413,7 +413,7 @@ Two lookup tables are generated to facilitate to match the country labels and na
 ```python
 cnt_code_lookup = dict(enumerate(df_visa_clean.index)) # index --> country code
 
-code_name_dict = load_dict_from_json(r'C:\Users\Balazs\Desktop\bhornung_movies\yemen2018\visa\ccodes.json')
+code_name_dict = load_dict_from_json(r'C:\Users\Balazs\Desktop\bhornung11_movies\yemen2018\visa\ccodes.json')
 cnt_name_lookup = {_k : code_name_dict[_v] for _k, _v in cnt_code_lookup.items()} # index --> country name
 ```
 

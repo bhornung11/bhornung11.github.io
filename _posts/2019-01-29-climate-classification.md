@@ -9,7 +9,7 @@ categories: python
 
 We attempt to construct a pipeline to predict the Koppen climate of a geographical location based on the observed temperatures and precipitation.
 
-The raw notebook can be found [here](https://github.com/bhornung/bhornung.github.io/blob/master/assets/climate-classification/notebook/climate-classification.ipynb).
+The raw notebook can be found [here](https://github.com/bhornung11/bhornung11.github.io/blob/master/assets/climate-classification/notebook/climate-classification.ipynb).
 
 ## The data
 

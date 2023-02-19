@@ -11,9 +11,9 @@ Calculating set similarities is one of the most common operations in data scienc
 ## Motivation
 
 
-I have been analysing the UK singles charts. The temporal evolution of the record labels was the topic of the [first part of the series](https://bhornung.github.io/python/2019/02/22/uk-charts-1.html). I am now investigating the Christmas singles. In order to determine what fraction of singles released in December recur in each year, I need a set similarity measure.
+I have been analysing the UK singles charts. The temporal evolution of the record labels was the topic of the [first part of the series](https://bhornung11.github.io/python/2019/02/22/uk-charts-1.html). I am now investigating the Christmas singles. In order to determine what fraction of singles released in December recur in each year, I need a set similarity measure.
 
-The raw notebook can be found [here](https://github.com/bhornung/bhornung.github.io/blob/master/assets/tversky-index/notebook/tversky-index.ipynb)
+The raw notebook can be found [here](https://github.com/bhornung11/bhornung11.github.io/blob/master/assets/tversky-index/notebook/tversky-index.ipynb)
 
 ## Set similarity indices
 
@@ -775,7 +775,7 @@ test_grid = ParameterGrid(test_params)
 
 In order to be a fair comparison, the time needed to convert the arrays to sets will not be measured when the `calculate_pairwise_tersky1` algorithm is used.
 
-The timing results are collected in the `results` list of dictionaries. We use the [`SlimTimer` utility](https://github.com/bhornung/SlimTimer) with which three measurements are carried out. The lines which perform the measurements are omitted from this post for sake of brevity. They can be inspected in the [raw notebook](https://github.com/bhornung/bhornung.github.io/blob/master/assets/tversky-index/notebook/tversky-index.ipynb).
+The timing results are collected in the `results` list of dictionaries. We use the [`SlimTimer` utility](https://github.com/bhornung11/SlimTimer) with which three measurements are carried out. The lines which perform the measurements are omitted from this post for sake of brevity. They can be inspected in the [raw notebook](https://github.com/bhornung11/bhornung11.github.io/blob/master/assets/tversky-index/notebook/tversky-index.ipynb).
 
 ![png]({{"/assets/tversky-index/images/output_40_0.png"}})
 
