@@ -1,0 +1,795 @@
+# ---
+# jupyter:
+#   jupytext:
+#     text_representation:
+#       extension: .py
+#       format_name: light
+#       format_version: '1.5'
+#       jupytext_version: 1.5.2
+#   kernelspec:
+#     display_name: sx-env
+#     language: python
+#     name: sx-env
+# ---
+
+# +
+# TO HIE -- SCRIPT
+
+from typing import (
+    Any,
+    Dict,
+    List,
+    Tuple
+)
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+
+# +
+# TO HIDE -- SCRIPT
+
+def calc_times_transport_max(
+        f: float,
+        v0: float,
+        v1: float,
+        v2: float,
+        n_pass: int,
+        len_pass: float,
+        len_esc: float
+    ) -> Tuple[float]:
+    """
+    Calculates the escalator transport times.
+    
+    Parameters:
+        f: float : fast fraction
+        v0: float : escalator velocity
+        v1: float : slow velocity relative to the escalator
+        v2: float : fast velocity relative to the escalator
+        n_pass: int : number of passengers
+        len_pass: float : length of a passenger
+        len_esc: float : length of the escalator
+        
+    Returns:
+        t0: np.ndarray : reference transport time
+        t1: np.ndarray : slow transport time
+        t2: np.ndarray : fast transport time
+    """
+    
+    vr1_inv = 1 / (v0 + v1)
+    vr2_inv = 1 / (v0 + v2)
+    len_pass_all = n_pass * len_pass
+    
+    t0 = (len_pass_all * 0.5 + len_esc) * vr1_inv * np.ones_like(f)
+    
+    t1 = (len_pass_all * (1 - f) + len_esc) * vr1_inv
+    
+    t2 = (len_pass_all * f + len_esc) * vr2_inv
+    
+    return t0, t1, t2
+
+
+def calc_times_transport_mean(
+        f: float,
+        v0: float,
+        v1: float,
+        v2: float,
+        n_pass: int,
+        len_pass: float,
+        len_esc: float
+    ) -> Tuple[float]:
+    """
+    Calculates the mean transport times.
+ 
+    Parameters:
+        f: float : fast fraction
+        v0: float : escalator velocity
+        v1: float : slow velocity relative to the escalator
+        v2: float : fast velocity relative to the escalator
+        n_pass: int : number of passengers
+        len_pass: float : length of a passenger
+        len_esc: float : length of the escalator
+        
+    Returns:
+        t0: np.ndarray : reference mean transport time
+        t1: np.ndarray : slow mean transport time
+        t2: np.ndarray : fast mean transport time
+        t21: np.ndarray : overall mean transport time
+    """
+    
+    vr1_inv = 1 / (v0 + v1)
+    vr2_inv = 1 / (v0 + v2)
+    len_pass_all = n_pass * len_pass
+    
+    t0 = (len_pass_all / 4 + len_esc) * vr1_inv * np.ones_like(f)
+    t1 = ((1 - f) * len_pass_all / 2 + len_esc) * vr1_inv
+    t2 = (f * len_pass_all / 2 + len_esc) * vr2_inv
+    t12 = (1 - f) * t1 + f * t2
+    
+    return t0, t1, t2, t12
+
+
+def extract_min_time(
+        t0: np.ndarray,
+        t1: np.ndarray,
+        t2: np.ndarray
+    ) -> np.ndarray:
+    """
+    Parameters:
+        t0: np.ndarray : reference transport time
+        t1: np.ndarray : slow transport time
+        t2: np.ndarray : fast transport time
+        
+    Returns:
+        t_min: np.ndarray : minimum tranfer time
+    """
+    
+    t_min = np.minimum(t0, np.maximum(t1, t2))
+    
+    return t_min
+
+
+def calc_fraction_left_time_max(
+        f: float,
+        v0: float,
+        v1: float,
+        v2: float,
+        n_pass: int,
+        len_pass: float,
+        len_esc: float
+    ) -> float:
+    """
+    Calculates the largest fraction of fast passengers at which
+    the two-speed setup is not worse than the single speed setup.
+
+    Parameters:
+        f: float : fast fraction
+        v0: float : escalator velocity
+        v1: float : slow velocity relative to the escalator
+        v2: float : fast velocity relative to the escalator
+        n_pass: int : number of passengers
+        len_pass: float : length of a passenger
+        len_esc: float : length of the escalator
+        
+    Returns:
+        f_max: float : maximum fraction
+    """
+    
+    v_rel = (v0 + v2) / (v0 + v1)
+    len_passenger_all = n_pass * len_pass
+    
+    f_max = 0.5 * v_rel + len_esc / (len_pass * n_pass) * (v_rel - 1)
+    
+    return f_max
+
+
+def calc_fraction_range_time_mean(
+        f: float,
+        v0: float,
+        v1: float,
+        v2: float,
+        n_pass: int,
+        len_pass: float,
+        len_esc: float
+    ) -> Tuple[float]:
+    """
+    Calculates the range in which the dual speed setup is preferable
+    with respect to the mean travel time.
+
+    Parameters:
+        f: float : fast fraction
+        v0: float : escalator velocity
+        v1: float : slow velocity relative to the escalator
+        v2: float : fast velocity relative to the escalator
+        n_pass: int : number of passengers
+        len_pass: float : length of a passenger
+        len_esc: float : length of the escalator
+        
+    Returns:
+        f_min: float : minimum fraction
+        f_max: float : maximum fraction
+    """
+    
+    u = (v0 + v2) / (v0 + v1)
+    l = len_esc / (len_pass * n_pass)
+    
+    det = 0.5 * l * l * u * u - l * l * u + 0.5 * l * l + l * u * u - l * u + 0.25 * u * u - 0.25 * u
+    det =  np.sqrt(2) * np.sqrt(det)
+    b = l * u - l + u
+    
+    f_min = (b - det) / (1 + u)
+    f_max = (b + det) / (1 + u)
+        
+    return f_min, f_max
+
+
+def calc_fraction_left_tm_2d(u, l):
+    
+    f = 0.5 * u + l * (u - 1)
+    f = np.minimum(f, 1)
+    return f
+
+
+# -
+
+# ## Introduction
+#
+# The handful of lines and figure in between presented in this entry investigates optimal escalator usage.
+#
+# ## Notes
+#
+# The raw notebook which contains all snippets of code that are required to reproduce this post is stored [here]((https://github.com/bhornung11/bhornung11.github.io/blob/master/assets/escalator-01/notebook/escalator-01.py)).
+#
+# ## Notions
+#
+# A simple mathematical model of the escalator and passangers are introduced below.
+#
+# An escalator is an object of length $L$ and velocity $v_{0}$ which can carry passengers.
+#
+# ### Assumptions
+#
+# * The velocity of the escalator is non-negative and finite : 
+#     * $0 \leq v_{0} < \infty$
+# * The escalator has a nonzero, finite length. This is somewhat in contradiction with how long it feels to travel up or down on some. For a resolution of the apparent disagreement between the experienced and real durations of such journeys, the readers are kindly referred to [this book](https://brocku.ca/MeadProject/Bergson/Bergson_1910/Bergson_1910_toc.html).
+#     *  $0 < L < \infty$
+# * Every passenger is characterised by a single and shared parameter, their length, which is larger than zero and finite:
+#     * $0 < \ell < \infty$.
+# * The finite number of passengers is denoted by $N$. There are more than zero passengers: 
+#     * $0 < N < \infty$.
+# * A passenger can only have one of two velocities, $v_{1}, v_{2}$ relative to escalator that carries them.
+# * Both velocities are either zero or parallel to that of the escalator:
+#     * $0 \leq v_{1} \land 0 \leq v_{2}$
+# * Without the loss of generality:
+#     * $v_{1} < v_{2}$.
+# * Smaller absolute velocity must be larger than zero i.e. the slower passengers cannot be stationary: 
+#     * $0 < v_{0} + v_{1}$.
+# * An escalator has a larger than zero and finite cross-section or number of lanes $n$, that is how many passengers can travel next to each other when they occupy a line perpendicular to its velocity.
+#     * $0 < n < \infty$
+# * The time to step on to and alight the the escalator is zero. Note, this does not mean that a passenger needs not to wait.
+#
+# ## Primary considerations
+#
+# ### Time required to board
+#
+# Let us assume there is an obstacle at the very beginning of a lane. In order for a passenger to board, it needs to move $\ell$ clear space in front of them. The time required for this is -- again, even though, it may feel as eternity -- is finite, and it is exactly
+#
+# $$
+#     \Delta t^{B} = \frac{\ell}{v_{0}} \, .
+# $$
+#
+# If there is an object at the very begining of the escalator which moves at a velocity $v_{i}$ relative to the belt then the time to have enough place to board changes to:
+# $$
+#     \Delta t_{i}^{B} = \frac{\ell}{v_{0} + v_{i}} \, .
+# $$
+#
+# In other words, if someone just hopped or plodded on the escalator and moves with $v_{i}$ the next passenger needs to wait for $\Delta t$. If there are $N$ passengers, and all have the same relative velocity, it takes
+#
+# $$
+#     t^{B}_{i} = (N - 1) \frac{\ell}{v_{0} + v_{i}}
+# $$
+#
+# time for the entire crowd to board the moving steps. The $-1$ comes from the tacit assumption that the escalator is initially empty, thus the first person can relocate to it without waiting. $t^{B}$, without the index, is the time required for the crowd to board the escalator. It is called the boarding time.
+#
+#
+# ### Time required to traverse
+#
+#
+# Once touching the thick black faux rubber ribbon, a passenger needs to traverse $L$ length at a velocity of $v_{0} + v_{i}$ from which the time:
+#
+# $$
+#     t^{T}_{i} = \frac{L}{v_{0} + v_{i}} \, .
+# $$
+#
+# $t^{T}$, without the index, is called the traverse time.
+#
+# ### Time required to clear the crowd
+#
+# The crowd is cleared when the last traveller steps off the escalator. This requires waiting and traversing times.
+#
+# $$
+# \begin{eqnarray}
+#     t_{i} & = & t^{B}_{i} + t^{T}_{i} \\
+#     t_{i} & = & (N - 1) \frac{\ell}{v_{0} + v_{i}} + \frac{L}{v_{0} + v_{i}} \\
+#     t_{i} & =  & \frac{(N - 1)\ell + L}{v_{0} + v_{i}}
+# \end{eqnarray}    
+# $$
+#
+# This last equation will be the basis of all further investigations. $t$, without the index, is the time required for the crowd to be moved from one side of the escalator to the other. It will be called the (total) transport time.
+#
+# ## Problem statement
+#
+# All passengers in a lane must have the same relative velocity $v_{1}$ or $v_{2}$. This separates the escalator to slow and fast lanes. A person who is capable of dashing through the escalator can join their companions who prefer to pace themselves. Someone who can only afford a speed of $v_{1}$ cannot join the faster travelers. The question is which we yearn to answer what number of slow and fast lanes need to maintained to achieve the fastest crowd movement.
+#
+# ### What is exactly being optimised?
+#
+# The problem statement ended with a deliberately vague term "fastest crowd movement". This can refer to at least three different objectives; all of them are  detailed below.
+#
+# * Shortest boarding time
+#     * If the desideratum is to clear up the space in front of the escalator, the boarding time, $t^{B}$ needs to be minimised.
+#
+# * Shortest total transfer time
+#   * If the aim is to esnure that all passengers leave the escalator in the shortest possible duration, the transfer time, $t^{T}$ is to be shortened as much as possible.
+#
+# * Shortest mean travel time
+#     * If the aim is that all travelers spend the least amount of time with queuing and traversing, the mean transfer time, $\bar{t}^{T}$ is ought to be minimised.
+#     
+# ### Problem restriction
+#
+# From now on, it is stipulated that the escalator only has two lanes. Therefore there are two possible layouts:
+# * two slow lines
+# * one slow and one fast line
+
+# ## Minimising boarding time
+#
+# ### Two slow lanes
+#
+# A crowd of $N$ people slowly ($v_{1}$) spreads towards the escalator in the hope of lifting them a few metres closer to their homes after a long day.
+#
+# It would take them
+#
+# $$
+#     \frac{1}{2}\frac{(N - 1) \ell}{v_{0} + v_{1}}
+# $$
+#
+# time to alleviate the legs. The $\frac{1}{2}$ factor is due to having two slow lanes available. Each of them can carry the half of group, hence to total transfer time is halved.
+#
+# ### One slow and one fast lane
+#
+# The slow lane permits only for $v_{1}$ relative speed, the fast one requires $v_{2}$.
+#
+# #### Fractions
+#
+# The community of passengers are composed $N_{1}$ pacers and $N_{2}$ dashers. Using fractions, $f_{i}$ instead of absolute numbers will facilitate the generalisation of some developments:
+#
+# $$
+#     \begin{eqnarray}
+#         N_{1} + N_{2} & = & N \\
+#         f & = & f_{2} = \frac{N_{2}}{N} \\
+#         f_{1} & = & \frac{N_{1}}{N} = 1 - f_{2} = 1 - f
+#     \end{eqnarray}
+# $$
+
+# ### When to use two different lanes?
+#
+# The answer is: when the larger of the two-speed lane setup transport times is smaller than the transport time of the single-speed layout. We cast this sentence in an equation because it will help us to formulate slightly more complex statements about the problem, (not just due to sheer compulsion).
+#
+# $$
+#     \frac{N - 1}{2} \frac{\ell}{v_{0} + v_{1}} > \max \left\{ 
+#          \frac{ [N(1 - f) - 1] \ell}{v_{0} + v_{1}},
+#          \frac{[N f - 1]\ell}{v_{0} + v_{2}}
+#     \right\}
+# $$
+
+# #### Approximation
+#
+# It is all to well tempting to factor out $N \ell$. This is only possible when the crowd is large ($1 << N$). Alternatively, one can surmise that the first person in each lane stops for a moment and ponders upon the meaning of life, how much a pound of cardamon costs or some other question of like depth.  Either way, we omit the correction for the first person, for it does not change the physics of the problem and doing so provides us with a clearer view of it. The simplified and approximate equation is thus written
+#
+# $$
+#     \frac{1}{2} \frac{1}{v_{0} + v_{1}} > \max \left\{ 
+#        \frac{1 - f}{v_{0} + v_{1}},
+#         \frac{f}{v_{0} + v_{2}}
+#     \right\} \, .
+# $$
+#
+# ### Pace and time
+#
+# The latest expression is given in terms of paces -- rare occasion when it is a useful quantity. The laxity of referring to paces as times are excusable because they are equivalent apart from a constant factor of $N \ell$.
+#
+# There are three distinct paces or times which will be frequently compared to each other:
+# 1. the reference time: $t_{0} = \frac{1}{2}{1}{v_{0} + v_{1}}$
+# 1. the slow time: $t_{1} = {1 - f}{v_{0} + v_{1}}$
+# 1. the fast time: $t_{2} = {f}{v_{0} + v_{2}}$
+
+# #### ... when at most half of the passengers take it slowly
+#
+# Having two slow lanes is always the faster option when at least the half of the travellers are slow:
+# 1. Two slow lanes renders the entire crowd slow. 
+#     1. Therefore the total time is equal to that required to clear half the crowd in each lane.
+# 1. If one of the lane is slow, the other one is fast
+#     1. and at least the half of the passengers are slow
+#         1. obviously, taking this cohort up in the slow lane requires more time than carrying only a half slow crowd
+#         1. obviously again, this duration is longer than what the fast passengers need ($f < 0.5$)
+#         1. therefore the total time will be longer than that achieved in the double-slow setup
+#
+# With pure arithmetics
+#
+# $$
+# \begin{eqnarray}
+#     # ! f & \in & ( 0, 0.5 ] \Rightarrow 
+#     \quad & \text{(fewer dashers than pacers)} & \text{(1)}\\
+# %    
+#      (1) & \Rightarrow &
+#     \frac{1}{2} < (1 - f)
+#      \quad & & \text{(2)} \\
+# %
+#    (2) & \Rightarrow & 
+#    \frac{1}{2} \frac{1}{v_{0} + v_{1}} < \frac{1 - f}{v_{0} + v_{1}}
+#    \quad &  & \text{(3)}\\
+# %
+#     # ! v_{1} & < & v_{2}
+#     \quad & \text{(distinct velocities)} & \text{(4)} \\
+# %
+#     (2) \land (4) & \Rightarrow &
+#     \frac{1 - f}{v_{0} + v_{1}} >  \frac{f}{v_{0} + v_{2}}
+#     \quad & \text{} & \text{(5)} \\
+# %
+#     (5) & \Rightarrow &
+#         \max \left\{ 
+#            \frac{1 - f}{v_{0} + v_{1}},
+#             \frac{f}{v_{0} + v_{2}}
+#         \right\} = \frac{1 - f}{v_{0} + v_{1}}
+#     \quad & \text{(transfering the slow crowd takes longer)} & \text{(6)} \\
+# %
+#     (2) \land (6) & \Rightarrow &
+#         \frac{1}{2} \frac{1}{v_{0} + v_{1}} < \max \left\{ 
+#            \frac{1 - f}{v_{0} + v_{1}},
+#             \frac{f}{v_{0} + v_{2}}
+#         \right\}
+#     \quad & \text{(two slow lane setup preferable)} & \text{(7)} \\
+# \end{eqnarray}
+# $$
+
+# #### ... but not too many are rushing
+#
+# We have only established a necessary but not sufficient criterion as to the preference of the two-speed layout.  If $0.5 < f$, then slow transport time, $t_{1}$ is shorter than the reference time, $t_{0}$. It steadily decreases as $f$ increases because there are fewer and fewer people to carry. 
+#
+# $$
+#     \begin{eqnarray}
+#         # ! f & \in > & (0.5, 1]
+#         \quad & \text{(less than half pacers)}  &\text{(1)} \\
+# %
+#         (1) & \Rightarrow &  \frac{(1 - f)}{v_{0} + v_{1}} = t_{1} < t_{0} = \frac{1}{2} \frac{1}{v_{0} + v_{1}}        \quad & \text{(less time to carry them than half the crowd in a slow lane)} & \text{(2)}
+#     \end{eqnarray}
+# $$
+#
+# The time to empty the fast lane, $t_{2}$ is smaller than $t_{1}$ provided the fraction is less than a certain limit. This implies that range of fractions that favour the two speed layout start at $f = 0.5$.
+#
+# The slow and fast transport times are equal if the number of the dashers balances the gain from moving quicker on the escalator:
+#
+# $$
+#     ! \frac{1 - f}{v_{0} + v_{1}} = \frac{f}{v_{0} + v_{2}} \\
+# %
+#     \Leftrightarrow
+#     \frac{1 - f}{f} = \frac{v_{0} + v_{1}}{v_{0} + v_{2}} , ;\\
+# $$
+#
+# that is the ratio of the sizes of the two crowds is equal to their absolute velocities. The tightest upper of the fraction is attained when the time to move all dashers becomes equal to the reference time:
+#
+# $$
+# \begin{eqnarray}
+#    \frac{1}{2}\frac{1}{v_{0} + v_{1}} = t_{0} & > &  t_{2} = \frac{f}{v_{0} + v_{2}}
+#    \quad & \,& 
+#    \\
+# %
+#     \Leftrightarrow
+#     \frac{1}{2} \frac{v_{0} + v_{2}}{v_{0} + v_{1}} & > & f
+#     \quad &\,& .
+# \end{eqnarray}
+# $$
+#
+# To tie all these observations and equations together, at given relative velocities of $v_{1} < v_{2}$ the fraction at which the dual speed layout results in the sorther boarding time must be in the range:
+#
+# $$
+#     \frac{1}{2} \frac{1}{v_{0} + v_{1}} > \max \left\{ 
+#        \frac{1 - f}{v_{0} + v_{1}},
+#         \frac{f}{v_{0} + v_{2}}
+#     \right\} \\
+#     \Leftrightarrow \\
+#     \frac{1}{2} < f < \min \left \{ 
+#         1 ,\frac{1}{2} \frac{v_{0} + v_{2}}{v_{0} + v_{1}}
+#     \right \} \, .
+# $$
+#
+# The fraction cannot be larger than unit, hence its upper bound is capped at one.
+
+# ### Graphical examples
+#
+#
+
+# +
+# TO HIDE -- BORING
+
+rv1 = 0
+rv2s = [0.25, 0.5, 1.0]
+fs = np.linspace(0, 1, num=51)
+
+v0 = 0.5
+n_pass = 100
+len_pass = 0.6
+len_esc = 0
+
+store_board_times = [
+    calc_times_transport_max(
+        fs, v0, v0 * rv1, v0 * rv2, n_pass, len_pass, len_esc
+    ) for rv2 in rv2s
+]
+
+store_board_frac_maxs = [
+    calc_fraction_left_time_max(
+        fs, v0, v0 * rv1, v0 * rv2, n_pass, len_pass, len_esc
+    ) for rv2 in rv2s
+]
+
+# +
+# TO HIDE -- PLOTTING
+
+fig, axes = plt.subplots(3, 1, figsize=(9, 6), sharex=True)
+
+colours = ["cornflowerblue", "navy", "purple"]
+for i, ax in enumerate(axes):
+    
+    t0, t1, t2 = store_board_times[i]
+    f_max = store_board_frac_maxs[i]
+
+    ax.set_title(r"$v_{1} = 0, v_{2}=$" f" {rv2s[i] + 1} " r"$\cdot v_{0}$")
+
+    ax.plot(fs, t0, c="#444444", label=r"$t^{B}_{0}$")
+    ax.plot(fs, t1, c="cornflowerblue", label=r"$t^{B}_{1}$")
+    ax.plot(fs, t2, c="blue", label=r"$t^{B}_{2}$")
+    
+    t_min = extract_min_time(t0, t1, t2)
+    
+    ax.plot(fs, t_min, color="purple", ls="--", lw=2, label=r"$t^{B*}_{1}$")
+    
+    ax.axvspan(0.5, f_max, color="#eeeeee")
+
+    ax.legend(loc="upper left")
+    ax.set_xlim(0, 1); ax.set_xticks(np.linspace(0, 1, 11))
+    ax.grid(True); ax.set_ylabel(r"$t$ / a.u.")
+_ = axes[2].set_xlabel(r"$f$ / a.u.")
+# -
+
+# Figure 1. The reference (grey solid line), slow (light blue solid line), fast (blue solid line) and minimum possible (purple dashed line) boarding times for $v_{2}= 1.25 v_{0}, 1.5 v_{0}, 2.0 v_{0}$, top, middle and bottom panels, respectively. The range of fractions at which the dual speed layout is optimal is shaded in light grey.
+
+# ## Minimising transfer time
+#
+# The transfer time is the sum of the boarding and traverse times. The condition under which the dual-speed setup is preferable thus reads: 
+#
+# $$
+#    \frac{\frac{(N - 1)}{2}\ell + L}{v_{0} + v_{1}}
+#     >
+#     \max \left\{
+#         \frac{[N(1 -f) - 1]\ell + L}{v_{0} + v_{1}}, \frac{[Nf - 1]\ell + L}{v_{0} + v_{2}}
+#     \right\} \, .
+# $$
+#
+# All the logic followed in the previous paragraph applies with the exception that the range of fractions are extended to the right. This is due to tranverse time. The longer the escalator the more time the faster crowd have to make gains on their slower counterpart. In addition, an escalator of sufficient length compensates for any initial clogging in front of the fast lane. The range of fractions where the dual-speed layout is the faster is given below:
+#
+# $$
+# \frac{1}{2} < f < \frac{1}{2}\frac{v_{0} + v_{2}}{v_{0} + v_{1}} 
+# + \frac{L}{N \ell} \left[ \frac{v_{0} + v_{2}}{v_{0} + v_{1}} - 1 \right] \, .
+# $$
+#
+# Figure 2. 
+
+# +
+# TO HIDE -- BORING
+
+rv1 = 0
+rv2s = [0.25, 0.5, 1.0]
+fs = np.linspace(0, 1, num=51)
+
+v0 = 0.5
+n_pass = 100
+len_pass = 0.6
+len_esc = 50
+
+store_board_times = [
+    calc_times_transport_max(
+        fs, v0, v0 * rv1, v0 * rv2, n_pass, len_pass, len_esc
+    ) for rv2 in rv2s
+]
+
+store_board_frac_maxs = [
+    calc_fraction_left_time_max(
+        fs, v0, v0 * rv1, v0 * rv2, n_pass, len_pass, len_esc
+    ) for rv2 in rv2s
+]
+
+# +
+# TO HIDE -- PLOTTING
+
+fig, axes = plt.subplots(3, 1, figsize=(9, 6), sharex=True)
+
+colours = ["cornflowerblue", "navy", "purple"]
+for i, ax in enumerate(axes):
+    
+    t0, t1, t2 = store_board_times[i]
+    f_max = store_board_frac_maxs[i]
+
+    ax.set_title(r"$v_{1} = 0, v_{2}=$" f" {rv2s[i] + 1} " r"$\cdot v_{0}$")
+
+    ax.plot(fs, t0, c="#444444", label=r"$t^{T}_{0}$")
+    ax.plot(fs, t1, c="cornflowerblue", label=r"$t^{T}_{1}$")
+    ax.plot(fs, t2, c="blue", label=r"$t^{T}_{2}$")
+    
+    t_min = extract_min_time(t0, t1, t2)
+    
+    ax.plot(fs, t_min, color="purple", ls="--", lw=2, label=r"$t^{T*}_{1}$")
+    ax.axvspan(0.5, f_max, color="#eeeeee")
+
+    ax.legend(loc="upper left")
+    ax.set_xlim(0, 1); ax.set_xticks(np.linspace(0, 1, 11))
+    ax.grid(True); ax.set_ylabel(r"$t$ / a.u.")
+_ = axes[2].set_xlabel(r"$f$ / a.u.")
+# -
+
+# Figure 2. The reference (grey solid line), slow (light blue solid line), fast (blue solid line) and minimum possible (purple dashed line) transport times for $v_{2}= 1.25 v_{0}, 1.5 v_{0}, 2.0 v_{0}$, top, middle and bottom panels, respectively. The range of fractions at which the dual speed layout is optimal is shaded in light grey.
+
+# #### Dimensionless parameters
+#
+# There are six parameters that can freely change: $v_{0}, v_{1}, v_{2}, L, \ell, N, f$. $v_{0}, v_{1}, v_{2}$ appear in a certain combination for the second in the expression of the fraction limits. This is no coincidence. This combination is the ratio of the absolute velocities of the two crowds. A basic quantity that determines how fast the two groups move relative to each other.
+#
+# An other combination that is telling of the behaviour of the system is the ratio of the escalator length and that of a single file queue of all passengers. It represents what fraction of time is spent with traversing relative to queueing. As long as these parameters are the same, no matter how many people at what pace, on how long escalator travel, the conditions under which one setup is preferable over the other are the same.
+#
+# They are so important that they warrant their own symbols:
+#
+# $$
+#     \begin{eqnarray}
+#         u & = & \frac{v_{0} + v_{2}}{v_{0} + v_{1}} \quad & \text{(velocity ratio)} \\
+# %
+#         \lambda & = & \frac{L}{N \ell} \quad & \text{(length ratio)} \, .
+#     \end{eqnarray}
+# $$
+#
+# The formula of the fraction ranges is indeed more informative if it is rewritten in these dimensionless terms:
+#
+# $$
+# \frac{1}{2} < f < \frac{1}{2} u 
+# + \lambda \left[ u - 1 \right] \, .
+# $$
+#
+# The maximum, $f_{max}$, on the right has two terms:
+# * $\frac{1}{2}u$ the advantage at boarding
+# * $\lambda [u - 1]$ if the relative gain due to the speed difference which increases as the escalator becomes longer
+#
+# A two dimensional plot summarises at what fractions the single speed setup is preferable as a function of these two parameters in Figure 3. For instance, is the quicker crowd is 20% faster than the slow and the length of the entire crowd is twice that of the escalator, then at 50 to 80 percent dashers the two lane setup is the more efficient.
+
+# +
+# TO HIDE -- BORING
+
+us = np.linspace(1, 2, num=251)
+ls = np.linspace(0.0, 2, num=240)
+
+uss = np.repeat(us, 240)
+lss = np.tile(ls, 251)
+
+fms = calc_fraction_left_tm_2d(uss, lss)
+
+# +
+# TO HIDE -- PLOTTING
+
+fig, ax = plt.subplots(1, 1, figsize=(6, 6))
+
+cax = ax.tricontourf(uss, lss, fms, vmin=0.5, vmax=1.5, levels=20, cmap="bwr")
+cbar = plt.colorbar(cax)
+cbar.set_label(r"$f_{max}$ / a.u.")
+ax.set_xlabel(r"$u$ / a.u."); ax.set_ylabel(f"$\lambda$ / a.u."); ax.grid(True)
+plt.savefig("escalator-2d.png")
+# -
+
+# Figure 3. The maximum fraction at which the dual speed setup is preferable as a function of the absolute velocity and length ratios. White indicates no upper limit.
+
+# ### Minimising mean transport time
+#
+# Let us consider a group of passengers of relaive velocity $v_{i}$. The first of them is clears the escalator in
+#
+# $$
+#     t^{T}_{min} = \frac{L}{v_{0} + v_{i}}
+# $$
+#
+# time beacuse they need not to queue. The last passenger's journey takes
+#
+# $$
+#     t^{T}_{max} =  \frac{N \ell + L}{v_{0} + v_{i}}
+# $$
+#
+# precious units of time. (We, again, ignored the correction to the queueing time.) All the other travelers arrive $\frac{\ell}{v_{0} + v_{i}}$ intervals apart. The transfer time thus has a uniform distribution between these two limits. Its mean is simply the average of its lowest and greatest values:
+#
+# $$
+#     \bar{t}^{T} = \frac{t^{T}_{min} + t^{T}_{max}}{2} = 
+#         \frac{ \frac{N}{2} \ell + L}{v_{0} + v_{i}} \, .
+# $$
+#
+# This formula is for a single lane. To calculate the reference mean, the boarding component ought to be halved:
+#
+# $$
+#     \bar{t}^{T}_{0} = \frac{ \frac{N}{4} \ell + L}{v_{0} + v_{1}} \, .
+# $$
+#
+# The mean time of the dual-speed layout is the average of the lanewise means weighted by the appropriate fractions: 
+#
+# $$
+#     \bar{t}^{T}_{12} = (1 - f) \frac{ \frac{N(1 - f)}{2} \ell + L}{v_{0} + v_{1}} +
+#     f \frac{ \frac{Nf}{2} \ell + L}{v_{0} + v_{2}}
+# $$
+#
+# Whichever setup results in the smaller mean transport time is the preferable.
+#
+# $$
+#  \frac{ \frac{N}{4} \ell + L}{v_{0} + v_{1}} \stackrel{?}{<} (1 - f) \frac{ \frac{N(1 - f)}{2} \ell + L}{v_{0} + v_{1}} +
+#     f \frac{ \frac{Nf}{2} \ell + L}{v_{0} + v_{2}}
+# $$
+#
+# This inequality is rewritten in the dimensionless quantities:
+#
+# $$
+#     \frac{1}{4} + \lambda < (1 - f) \left[ \frac{1 - f}{2} + \lambda \right] + f \frac{\frac{f}{2} + \lambda}{u}
+# $$
+#
+# The range of the fractions is spanned by the solutions of the resultant quadratic equation: 
+#
+# $$
+#     \frac{
+#         \frac{u}{2} + \ell (u - 1)
+#         \pm \sqrt{
+#             \left[ \frac{u}{2} + \ell (u - 1) \right]^{2} - \left[ u (1 + \frac{u}{2})\right]
+#         }
+#     }{
+#         1 + u
+#     } \, .
+# $$
+
+# Figure 4. shows the usual curves of the various times. The range in which the dual speed setup is mor efficient starts below half and extends furter to the right compared to the previous objectives. This is due to the fact that we are comparing the middle of the distributions as opposed to their right limit. The mean is always smaller than the maximum if there are at least two different points in the distributions which is the case.
+
+# +
+# TO HIDE -- BORING
+
+rv1 = 0
+rv2s = [0.25, 0.5, 1.0]
+fs = np.linspace(0, 1, num=51)
+
+v0 = 0.5
+n_pass = 100
+len_pass = 0.6
+len_esc = 50
+
+store_board_times = [
+    calc_times_transport_mean(
+        fs, v0, v0 * rv1, v0 * rv2, n_pass, len_pass, len_esc
+    ) for rv2 in rv2s
+]
+
+store_board_frac_ranges = [
+    calc_fraction_range_time_mean(
+        fs, v0, v0 * rv1, v0 * rv2, n_pass, len_pass, len_esc
+    ) for rv2 in rv2s
+]
+
+# +
+# TO HIDE -- PLOTTING
+
+fig, axes = plt.subplots(3, 1, figsize=(9, 6), sharex=True)
+
+colours = ["cornflowerblue", "navy", "purple"]
+for i, ax in enumerate(axes):
+    
+    t0, t1, t2, t21 = store_board_times[i]
+    f_min, f_max = store_board_frac_ranges[i]
+    
+    ax.set_title(r"$v_{1} = 0, v_{2}=$" f" {rv2s[i] + 1} " r"$\cdot v_{0}$")
+
+    ax.plot(fs, t0, c="#444444", label=r"$\bar{t}^{T}_{0}$")
+    ax.plot(fs, t1, c="cornflowerblue", label=r"$\bar{t}^{T}_{1}$")
+    ax.plot(fs, t2, c="blue", label=r"$\bar{t}^{T}_{2}$")
+    ax.plot(fs, t21, c="navy", label=r"$\bar{t}^{T}$")
+    
+    t_min = extract_min_time(t0, t21, t21)
+    
+    ax.plot(fs, t_min, color="purple", ls="--", lw=2, label=r"$\bar{t}^{T*}$")
+    ax.axvspan(f_min, f_max, color="#eeeeee")
+
+    ax.legend(loc="upper left")
+    ax.set_xlim(0, 1); ax.set_xticks(np.linspace(0, 1, 11))
+    ax.grid(True); ax.set_ylabel(r"$t$ / a.u.")
+_ = axes[2].set_xlabel(r"$f$ / a.u.")
+# -
+
+# Figure 4. The reference (grey solid line), mean slow (light blue solid line), mean fast (blue solid line), overall mean (dark blue solid line) and minimum possible mean (purple dashed line) transfer times for $v_{2}= 1.25 v_{0}, 1.5 v_{0}, 2.0 v_{0}$, top, middle and bottom panels, respectively. The range of fractions at which the dual speed layout is optimal is shaded in light grey.
+#
+# ## Conclusion
+#
+# A simplistic model has been developed to model the boarding and transport times of a crowd of passengers on a two lane escalator. The formalism can easily be extended to handle the cases below
+# * More than two lanes or velocities would lbe problem to be solved by linear or quadratic programming
+# * Introducing staging before the esclator to collect the passengers of various paces would be a task to be tackled with either discrete event simulation, or differential equations.
+# * If Transport for London ever considered anything along these lines would be a miracle.
