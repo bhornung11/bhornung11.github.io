@@ -121,7 +121,7 @@ The following markers were indentified alltogether:
 
 ### Airline name patterns summary
 
-Having identified the markers and the specifier fragments, more granular naming patterns emerge -- twenty of them. Eighty percent of all names contain at least one reference to air travel. Whole word tokens are four times more prevalent than the markers.
+Having identified the markers and the specifier fragments, more granular naming patterns emerge -- twenty two of them. Eighty percent of all names contain at least one reference to air travel. Whole word tokens are four times more prevalent than the markers.
 
 Figure 6. arranges the airline names according to their naming patters. Markers are coloured in orange, fragment specifiers are distinguished by their pale gray shade.
 
@@ -138,23 +138,25 @@ Figure 7. The counts of airline naming patterns. Read each stack from top to bot
 
 Finally, an example of each pattern is provided below:
 1. `ST`: `Alaska Airlines`
-1. `S`: `Emirates`
-1. `st`: `Ryanair`
-1. `TS`: `Air Baltic`
-1. `SST`: `All Nippon Airways`
-1. `ts`: `Aeroflot`
-1. `SS`: `Cathay Pacific`
-1. `STS`: `Delta Air Lines`
-1. `tsT`: `SkyWest Express`
-1. `stT`: `Skyjet Airlines`
-1. `STT`: `Caicos Express Airways`
-1. `tsS`: `Skyhigh Dominicana`
-1. `TSS`: `Air New Zeeland`
-1. `TST`: `Air India Express`
-1. `Sts`: `Iran Airtour`
-1. `TT`: `Sky Airline`
-1. `SSST`: `Costa Rica Green Airways`
-1. `TSSS`: `Air China Inner Mongolia`
-1. `Sst`: `Malta Medair`
-1. `stS`: `Tigerair Taiwan`
+2. `S`: `Emirates`
+3. `st`: `Ryanair`
+4. `TS`: `Air Baltic`
+5. `SST`: `All Nippon Airways`
+6. `ts`: `Aeroflot`
+7. `SS`: `Cathay Pacific`
+8. `STS`: `Delta Air Lines`
+9. `tsT`: `SkyWest Express`
+10. `STT`: `Caicos Express Airways`
+11. `stT`: `Skyjet Airlines`
+12. `tsS`: `Skyhigh Dominicana`
+13. `TSS`: `Air New Zeeland`
+14. `TST`: `Air India Express`
+15. `Sts`: `Iran Airtour`
+16. `TT`: `Sky Airline`
+17. `tt`: `Air1Air`
+18. `SSST`: `Costa Rica Green Airways`
+19. `TSSS`: `Air China Inner Mongolia`
+20. `Sst`: `Malta Medair`
+21. `ttT`: `Skyjet Airlines`
+22. `stS`: `Tigerair Taiwan`
 
