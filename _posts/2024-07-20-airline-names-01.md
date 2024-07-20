@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "Airline naming patterns"
-date:   2024-07-20 08:09:44 +0000
+date:   2024-07-20 06:09:44 +0000
 categories: radix tree, encoding
 ---
 
