@@ -2,3 +2,4 @@ _site/
 /assets/imnothere.txt
 /assets/images/imnothere.txt
 */__pycache__/*
+*pyc
