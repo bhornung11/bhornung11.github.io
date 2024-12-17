@@ -4,6 +4,7 @@ MP3 I/O convenience functions.
 
 import os.path
 from typing import (
+    Generator,
     List
 )
 
@@ -11,6 +12,7 @@ import librosa
 import soundfile as sf
 
 from mp3_script.mp3_types import (
+    AlbumEntry,
     Song,
     TypeAlbumCollection
     
@@ -49,8 +51,8 @@ def split_album_to_songs(dir_artist: str, name_album: str) -> None:
         fname = f"{name_album}-{i:02d}.mp3"
         path = os.path.join(dir_artist, name_album, fname)
 
-        sf.write(path, y[i1:i2], sampling_rate)
-        
+        sf.write(path, waveform[i1:i2], sampling_rate)
+
 
 def load_albums(
         dir_artist: str
@@ -86,6 +88,53 @@ def load_albums(
             )
 
     return albums
+
+
+def make_gen_album_entries(
+        dir_artist: str
+    ) -> Generator:
+    """
+    Loads all albums in a folder. An album is a subfolder with mp3 files.
+
+    Parameters:
+        dir_artist: str: full path to folder containing the albums
+
+    Returns:
+        inner: Generator : generator of album entries
+    """
+
+    def inner():
+        """
+        Album entry yielder.
+
+        Parameters:
+            None
+
+        Yields:
+            entry: AlbumEntry
+        """
+
+    folders = select_make_folder_paths(dir_artist)
+
+    for folder in folders:
+        files = select_make_file_paths(folder)
+        name_album = os.path.split(folder)[-1]
+
+        # load files sequentially
+        for file in files:
+            
+            name_song = os.path.split(file)[-1].split(".")[0]
+
+            waveform, sampling_rate = librosa.load(file)
+            song = Song(
+                waveform, sampling_rate, len(waveform)
+            )
+
+            entry = AlbumEntry(name_album, name_song, song)
+
+            yield entry
+
+    return inner()
 
 
 def select_make_folder_paths(
