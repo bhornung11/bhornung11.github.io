@@ -9,8 +9,7 @@ from typing import (
     Callable,
     Dict,
     Generator,
-    Iterable,
-    List
+    Iterable
 )
 
 from mp3_script.mp3_types import (
@@ -31,6 +30,9 @@ from mp3_script.subsampling import (
 )
 from mp3_script.transforms.legenre import (
     expand_legendre_w
+)
+from mp3_script.trim import (
+    trim_series_w
 )
 
 
@@ -103,7 +105,13 @@ def make_gen_transform(
 
 
 def transform_chain(
-        dir_artist: str
+        dir_artist: str,
+        return_stage: str,
+        kwargs_spl: Dict[str, Any]={"min_amplitude": 1e-4, "max_amplitude": 1.0, "ref_amplitude": 1e-4},
+        kwargs_loudness: Dict[str, Any]={"max_spl": 80, "factor": 10},
+        kwargs_lhat: Dict[str, Any]={"spacing": 0.1, "width": 0.05},
+        kwargs_trim: Dict[str, Any]={"left": 3, "right": 3},
+        kwargs_coeff: Dict[str, Any]={"order": 50},
     ) -> Generator:
     """
     Reads mp3 files from albums and encodes them as loudnes time series in terms of
@@ -111,37 +119,58 @@ def transform_chain(
 
     Parameters:
         dir_artist: str : full path to the folder containing the album folders
+        return_stage: str : which stage to return
 
     Returns:
         gen_coeff : album entries with expansion coefficients
     """
 
     gen_entries = make_gen_album_entries(dir_artist)
-    
+
+    if return_stage == "wave":
+        return gen_entries
+
     gen_aw = make_gen_transform(
         gen_entries, transform_a_weight_w, {}
     )
-    
+
+    if return_stage == "aw":
+        return gen_aw
+
     gen_spl = make_gen_transform(
-        gen_aw,
-        convert_amplitude_to_spl_w,
-        {"min_amplitude": 1e-4, "max_amplitude": 1.0, "ref_amplitude": 1e-4}
+        gen_aw, convert_amplitude_to_spl_w, kwargs_spl
     )
-    
+
+    if return_stage == "spl":
+        return gen_spl
+
     gen_loudness = make_gen_transform(
-        gen_spl,
-        convert_spl_to_loudness_power_two_w,
-        {"max_spl": 80, "factor": 10}
+        gen_spl, convert_spl_to_loudness_power_two_w, kwargs_loudness
     )
+
+    if return_stage == "loudness":
+        return gen_loudness
 
     gen_lhat = make_gen_transform(
-        gen_loudness,
-        smooth_subsample_w,
-        {"spacing": 0.1, "width": 0.05}
+        gen_loudness, smooth_subsample_w, kwargs_lhat
     )
 
-    gen_coeff = make_gen_transform(
-        gen_lhat, expand_legendre_w, {"order": 25}
+    if return_stage == "lhat":
+        return gen_lhat
+
+    gen_trimmed = make_gen_transform(
+        gen_lhat, trim_series_w, kwargs_trim
     )
 
-    return gen_coeff
+    if return_stage == "trim":
+        return gen_trimmed
+
+    if return_stage == "coeff":
+
+        gen_coeff = make_gen_transform(
+            gen_trimmed, expand_legendre_w, kwargs_coeff
+        )
+
+        return gen_coeff
+
+    raise ValueError(f"Unrecognised stage {return_stage}")

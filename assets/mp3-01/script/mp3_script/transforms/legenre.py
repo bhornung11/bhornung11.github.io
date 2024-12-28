@@ -34,7 +34,7 @@ def expand_legendre_w(
                 of the original song
     """
 
-    coeffs = expand_legendre(song.time_series, order)
+    coeffs = expand_legendre_ch(song.time_series, order)
     
     transformed = Song(
         coeffs, song.sampling_rate, song.n_sample
@@ -70,6 +70,53 @@ def expand_legendre(
         coeffs[i] = np.dot(y, poly) * (x_[1] - x_[0]) * (i + 0.5)
 
     return coeffs
+
+
+def expand_legendre_ch(
+        y: np.ndarray,
+        order: int
+    ) -> np.ndarray:
+    """
+    Determines the Legendre polynomial expansion coeffcients if a series.
+
+    Parameters:
+        y: np.ndarray : series to expand with Legendre polynomials
+        n: int : expansion order
+
+    Returns:
+        coefs: np.ndarray : expansion coefficients
+         : float : dummy sampling rate
+        n_points: int : number sumber of samples in y 
+    """
+
+    n_points = len(y)
+    x = np.linspace(-1, 1, n_points)
+    x_nodes = _calc_chebysev_nodes(n_points)
+
+    y_nodes = np.interp(x_nodes, x, y)
+
+    coeffs = np.zeros(order + 1, dtype=np.float64)
+
+    for i in range(0, order + 1):
+        poly = eval_legendre(i, x_nodes)
+        coeffs[i] = np.trapz(y_nodes * poly, x=x_nodes) * (2 * i + 1) / 2
+
+    return coeffs
+
+
+def _calc_chebysev_nodes(n: int) -> np.ndarray:
+    """
+    Calculate the Chebysev nodes.
+
+    Parameters:
+        n: int : number of nodes
+
+    Returns;
+        nodes: np.ndarray : node coordinates
+    """
+    nodes = np.cos(np.arange(n - 1, 0, - 1) / (n - 1) * np.pi)
+
+    return nodes
 
 
 def reconstruct_legendre_w(
