@@ -1,0 +1,537 @@
+# ---
+# jupyter:
+#   jupytext:
+#     text_representation:
+#       extension: .py
+#       format_name: percent
+#       format_version: '1.3'
+#       jupytext_version: 1.17.2
+#   kernelspec:
+#     display_name: Python 3 (ipykernel)
+#     language: python
+#     name: python3
+# ---
+
+# %%
+# TO HIDE -- SETUP
+
+from itertools import (
+    batched,
+    chain,
+    compress,
+    islice
+)
+
+import os.path
+import sys
+
+from random import random
+
+# %%
+# TO HIDE -- SETUP
+
+DIR_SCRIPT = os.path.realpath("dir_script")
+
+# %%
+# TO HIDE -- SETUP
+
+sys.path.append(DIR_SCRIPT)
+
+# %%
+# TO HIDE -- SETUP
+
+from src.generators.batches import (
+    make_batcher,
+    serialiser,
+    taker,
+    _make_batch_function,
+    loop_terminate_batch_function,
+    prepend_generator
+)
+
+from src.generators.batch_selectors import (
+    make_batch_selector_cond1,
+    make_batch_selector_cond2,
+    make_batch_selector_cond_count
+)
+
+# %% [markdown]
+# The second part of the series still concerns itself with single input--single output generators. These will create or consume batches of elements as opposed to individual ones, this time.
+#
+# ## Note
+#
+# The raw notebook can be accessed [here](). The [folder]() contains the scripts displayed below.
+#
+# ## Introduction
+#
+# A chunk, or with a more educated choice of word, a batch is an iterable series of the original elements. It is, in itself, is an element that can be passed between generators. Any utility discussed in the previous post can consume and manipulate them. Currying is invoked abundantly to attach an `iterator` to generators.
+
+# %% [markdown]
+# ## Batching generators
+#
+# ### Taker
+#
+# A taker retrieves a specified number of subsequent element from an iterator and creates a generator from them. This forms the basis of a batcher. `batch_function` once instantiated -- or called if you wish -- is a generator. What it does is rather simple: it tries to yield a given number of elements from an iterable. Once there are no more elements it returns `None` by breaking out from the while loop. The conditionals in the end are to optionally ensure that the generator produces a given number of items.
+#
+# ```python
+# def _make_batch_function(
+#         iterator: Iterator,
+#         n: int,
+#         strict: bool
+#     ) -> Callable:
+#     """
+#     Makes a function that takes a specified number of
+#     elements from an iterator when called.
+#     """
+#
+#     def batch_function() -> Any:
+#         """
+#         Takes elements from an iterator and generates a batch of them.
+#         """
+#
+#         i = 0
+#         while i < n:
+#             i += 1
+#             try:
+#                 yield next(iterator)
+#             except StopIteration:
+#                 break
+#
+#         if n != 1 and strict:
+#             if (i != n) and (i != 1):
+#                 raise ValueError()
+#
+#     return batch_function
+# ```
+
+# %% [markdown]
+# The `taker` function creates an instance of the `batch_function` which is a generator being returned.
+#
+# ```python
+# def taker(
+#         iterator: Iterator,
+#         n: int,
+#         strict: bool
+#     ) -> Generator:
+#     """
+#     Makes a generator that takes a specified number of
+#     elements from an iterator.
+#     """
+#
+#     # create a taker function
+#     taken = _make_batch_function(iterator, n, strict)
+#
+#     # return an instance of it
+#     return taken()
+# ```
+#
+# Let us grab the first three characters of the string iterator at once!
+
+# %%
+string = "abcdefghjikl"
+
+print("DIY:")
+taker = taker(iter(string), 3, False)
+print("\t", " ".join(taker))
+
+print("\nitertools")
+print("\t", " ".join(islice(iter(string), 3)))
+
+# %% [markdown]
+# ### Batcher
+#
+# A batcher is a generator of batches from an iterable. Structurally, it is a looped `taker`. `make_batcher` first creates a `taker` function. We can see this as a promise whenever this function is called it will return a batch (generator of a group of subsequent elements).
+#
+# ```python
+# def make_batcher(
+#         iterator: Iterator,
+#         n: int,
+#         strict: bool=True
+#     ) -> Generator:
+#     """
+#     Makes a generator of batches.
+#     """
+#
+#     # will create a batch i.e. a generator of n elements when called call
+#     batch_function = _make_batch_function(iterator, n, strict)
+#
+#     # yield batches from the iterator until it is exhausted
+#     batcher = loop_terminate_batch_function(batch_function)
+#
+#     return batcher
+# ```
+
+# %% [markdown]
+# `loop_terminate_batch_function` callS this function repeatedly until the underlying iterator is exhausted. Termination happens by investigating whether the current batch has any elements in it. Since we are iterating over generators, these sentinel elements are needed to be placed back in the generator.
+#
+# ```python
+# def loop_terminate_batch_function(
+#         batch_function: Callable
+#     ) -> Generator:
+#     """
+#     Creates batches and terminates them on an empty one.
+#     """
+#
+#     while True:
+#         batch = batch_function()
+#
+#         try:
+#             element = next(batch)
+#
+#             batch = prepend_generator(element, batch)
+#             yield batch
+#
+#         except StopIteration:
+#             return
+# ```
+
+# %% [markdown]
+# This readdition is carried out by an arguably hacky way  (recursion alert!):
+#
+# ```python
+# def prepend_generator(
+#         element_prepend: Any,
+#         generator: Generator
+#     ) -> Any:
+#     """
+#     Prepends an generator with an element.
+#     """
+#
+#     yield element_prepend
+#     for element in generator:
+#         yield element
+# ```
+
+# %% [markdown]
+# Let us finally invoke the batcher:
+
+# %%
+print("DIY:")
+batch_string = make_batcher(iter(string), 2, strict=True)
+print("\t", " | ".join(" ".join(batch) for batch in batch_string))
+
+print("\nitertools:")
+batch_string = batched(iter(string), 2)
+print("\t", " | ".join(" ".join(batch) for batch in batch_string))
+
+# %% [markdown]
+# The `batched` function of the `itertools` module just does almost the same. There is a major difference, in addition to performance. The standard library function returns the batches as tuples as opposed to generators:
+
+# %%
+print("DIY:")
+batch_string = make_batcher(iter(string), 2, strict=True)
+print("\t", next(batch_string))
+
+print("\nitertools:")
+batch_string = batched(iter(string), 2)
+print("\t", next(batch_string))
+
+# %% [markdown]
+# ### Serialiser
+#
+# The serialiser is the left inverse of the batcher. It takes an iterator of batches and returns an elementwise generator. Its aptly named implementation reads as:
+#
+# ```python
+# def serialiser(batches: Iterator) -> Generator:
+#     """
+#     Makes an elementwise generator from batches
+#     """
+#
+#     def serialise() -> Any:
+#         """
+#         Elementwise generator over batches.
+#         """
+#
+#         for batch in batches:
+#             for element in batch:
+#                 yield element
+#
+#     return serialise()
+# ```
+#
+# Again, for a neater behaviour, the inner for loop could be replaced by the `yield from batch` statement. The serialiser is utilised to make a contiguous sequence of letters from separate words:
+
+# %%
+strings = (["ab", "cd", "ef", "gh"])
+
+print("DIY:")
+serial_string = serialiser(iter(string))
+print("\t", " ".join(serial_string))
+
+print("itertools:")
+serial_string = chain.from_iterable(iter(string))
+print("\t", " ".join(serial_string))
+
+# %% [markdown]
+# ## Batch selectors
+#
+# These generators yield batches which satisty certain criteria. An example of this is the selection blocks of lines of interest from a log or text dump. 
+#
+# The selection starts once an element has the required properties e.g. a pattern matches it. The subsequent elements are collected in a batch until the generator is instructed to finalise and yield it. Signalling the end of the batch accummulation depends on the actual need. We present three variations herein.
+#
+# ### Double condition
+#
+# Once an element satisfies a logical condition the following elements are budled up in a batch until an other logical condition is met. Then the batch is yielded. It is implemented in the `make_batch_selector_cond2` factory.
+#
+# ```python
+# def make_batch_selector_cond2(
+#         iterator: Iterator,
+#         cond_start: Callable,
+#         cond_end: Callable,
+#         yield_start: bool,
+#         yield_end: bool
+#     ) -> Generator:
+#     """
+#     Creates a generator of batches where a batch yields subsequent
+#     elements once a condition is satisfied until and other condition is met.
+#     """
+#
+#     def selector_function() -> Any:
+#         """
+#         Generator function to produce elements between two conditions.
+#         """
+#
+#         has_batch_started = False
+#
+#         for element in iterator:
+#
+#             if not has_batch_started:
+#                 # start to select batch elements once the condition is met
+#                 if cond_start(element):
+#
+#                     if yield_start:
+#                         yield element
+#                     has_batch_started = True
+#
+#             else:
+#                 # end is signalled
+#                 if cond_end(element):
+#
+#                     if yield_end:
+#                         yield element
+#
+#                     # terminate iteration so that the batch is yielded
+#                     break
+#                 else:
+#                     # select more element to be the part of the batch
+#                     yield element
+#
+#     selector = loop_terminate_batch_function(selector_function)
+#
+#     return selector
+# ```
+#
+# A use case is to extract blocks of valueable data from their environ:
+
+# %%
+it = iter(
+    "noiseBmessage1EmorenoiseBmessage2Enoi"
+)
+
+batch_select_string = make_batch_selector_cond2(
+    it,
+    cond_start=lambda x: x == "B",
+    cond_end=lambda x: x == "E",
+    yield_start=False,
+    yield_end=False
+)
+
+print(" | ".join("".join(b) for b in batch_select_string))
+
+# %% [markdown]
+# #### Single condition
+#
+# There are subsequent blocks of elements that are separated by single elements. These separating elements are called sentinels. They have an other, implicit function too, they also signal the end of a batch. Therefore they need to be seen by two batches. The only trick, or hack, depending on the reader's disposition, that a sentinel element needs to be placed back in the generator. `make_batch_selector_cond1` factory creates a single condition batch generator.
+#
+# ```python
+# def make_batch_selector_cond1(
+#         iterator: Iterator,
+#         cond_start: Callable,
+#         yield_start: bool,
+#     ) -> Generator:
+#     """
+#     Creates a generator that splits the original stream to neighbouring
+#     batches. A batch starts when a condition is met.
+#     """
+#     # this is dirty => create a memory that is
+#     # persisted between batches
+#     _iterator = iter(iterator)
+#
+#     def selector_func():
+#         """
+#         Generator function of batches starting at a condition.
+#         """
+#
+#         # share the memory with the inner function
+#         nonlocal _iterator
+#
+#         has_batch_started = False
+#
+#         for element in _iterator:
+#
+#             if not has_batch_started:
+#                 if cond_start(element):
+#
+#                     if yield_start:
+#                         yield element
+#
+#                     has_batch_started = True
+#             else:
+#                 if cond_start(element):
+#                     # terminate iteration => a batch will be yielded
+#                     break
+#                 else:
+#                     # select element to the batch
+#                     yield element
+#
+#         # add back the sentinel element so that we can start a batch again
+#         _iterator = prepend_generator(element, _iterator)
+#
+#     return loop_terminate_batch_function(selector_func)
+# ```
+#
+# Head-to-tail messages are now retrieved from a stream with amazing ease
+
+# %%
+it = iter(
+    "noiseBmessage1Bmessage2 and more until a new sentinel element is found"
+)
+
+batch_select_string = make_batch_selector_cond1(
+    it,
+    cond_start=lambda x: x == "B",
+    yield_start=False
+)
+
+print(" | ".join("".join(b) for b in batch_select_string))
+
+# %% [markdown]
+# ### Condition and count
+#
+# Selection starts on a satisfied condition and ends once the specified number of elements are marked for the batch (or the generator ends). This flavour of generator is produced by the `make_batch_selector_coud_count` function.
+#
+# ```python
+# def make_batch_selector_cond_count(
+#         iterator: Iterator,
+#         cond_start: Callable,
+#         n: int,
+#         yield_start: bool
+#     ) -> Generator:
+#     """
+#     Creates a generator that splits the original stream batches.
+#     A batch starts when a condition is met and ends when a given
+#     number of elements are yielded from it.
+#     """
+#
+#     def selector_function() -> Any:
+#         """
+#         Condition and count batch generator function.
+#         """
+#
+#         has_batch_started = False
+#         # counter of elements selected to the batch
+#         i = 0
+#
+#         for element in iterator:
+#
+#             if not has_batch_started:
+#                 if cond_start(element):
+#
+#                     if yield_start:
+#                         i += 1
+#                         yield element
+#
+#                     has_batch_started = True
+#             else:
+#                 i += 1
+#                 # enough elements in the batch =>
+#                 if i == n + 1:
+#                     # => terminate iteration
+#                     break
+#                 else:
+#                     # select element to the batch
+#                     yield element
+#
+#     return loop_terminate_batch_function(selector_function)
+# ```
+#
+# It lends itself to isolate blocks of fixed length:
+
+# %%
+it = iter(
+    "somenoiseBfixed length message 001noiseBfixed length message 002morenoise"
+)
+
+batch_select_string = make_batch_selector_cond_count(
+    it,
+    cond_start=lambda x: x == "B",
+    n=24,
+    yield_start=False
+)
+
+print(" | ".join("".join(b) for b in batch_select_string))
+
+# %% [markdown]
+# ## Compound generators
+#
+# A compound generator is created by chaining two or more generators together.
+#
+# ### (serialiser + batcher) $\rightarrow$ regulariser
+#
+# This consumes a batch generator which is serialied then constant sized batches are formed from the sequence of elements. A usecase is when datasets of differing length are to be remoulded to fixed sized units.
+
+# %%
+# with DIY
+it = ("a" * i  for i in range(1, 6))  # "a" "aa" "aaa" ...
+
+gen = serialiser(it)
+gen = make_batcher(gen, 3)
+print(" | ".join("".join(batch) for batch in gen))
+
+# with itertools
+it = ("a" * i  for i in range(1, 6))
+
+gen = batched(chain.from_iterable(it), 3)
+print(" | ".join("".join(batch) for batch in gen))
+
+# %% [markdown]
+# ### (serialiser + batch selector) $\rightarrow$ batch extractor
+#
+# When a serialiser and a batch selector is coupled together linked pieces of information split across multiple batches can be retrieved.
+
+# %%
+it = (
+    iter(chunk)
+    for chunk in ["noiseBmess", "age", "1", "Enoxyzis", "eBmessa", "ge2Enoise"]
+)
+
+gen = serialiser(it)
+gen = make_batch_selector_cond2(
+    gen,
+    cond_start=lambda x: x == "B",
+    cond_end=lambda x: x == "E",
+    yield_start=False,
+    yield_end=False
+)
+
+print(" | ".join("".join(batch) for batch in gen))
+
+# %% [markdown]
+# ### (filter + batcher) $\rightarrow$ bacth collector
+#
+# Elements are selected from a stream based on a condition. These are then bundled together. A real life example is selecting specific members of a sample for writing them in to a separate storage.
+
+# %%
+it = (
+    ("class A" if random() > 0.7 else "class B", f"{random():3.2f}") for i in range(20)
+)
+
+print("DIY:")
+
+batched_class_a = make_batcher(filter(lambda x: x[0] == "class A", it), 4)
+print("\t", " ".join(str(x) for x in next(batched_class_a)))
+
+batched_class_a = batched(filter(lambda x: x[0] == "class A", it), 4)
+
+print("\nitertools:")
+print("\t", " ".join(str(x) for x in next(batched_class_a)))
