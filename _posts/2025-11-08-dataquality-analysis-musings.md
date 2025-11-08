@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "Musings of data quality analysis"
+title:  "Musings on data quality analysis"
 date:   2025-11-08 10:01:21 +0000
 categories: data quality analysis
 ---
